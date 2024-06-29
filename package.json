@@ -27,6 +27,13 @@
 		"test": "bun test",
 		"prepare": "npm run build"
 	},
+	"repository": {
+		"type": "git",
+		"url": "https://github.com/KodekoStudios/akore.git"
+	},
+	"bugs": {
+		"url": "https://github.com/KodekoStudios/akore/issues"
+	},
 	"keywords": ["transpiler"],
 	"author": "Kodeko Studios",
 	"license": "Kodeko Studios Proprietary License",
