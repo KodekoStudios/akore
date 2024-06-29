@@ -1,4 +1,4 @@
-<img src="https://i.pinimg.com/564x/b4/49/df/b449df8de856cb236711cac127aa7dde.jpg" aling="right" height=100 alt="kita ikuyo" />
+<img src="https://i.pinimg.com/564x/b4/49/df/b449df8de856cb236711cac127aa7dde.jpg" align="right" height=100 alt="kita ikuyo" />
 
 # Akore
 
