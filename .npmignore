@@ -1,0 +1,19 @@
+# Ignore specific files
+src/
+
+# Ignore by extension
+*.log
+*.tmp
+*.bak
+
+# Ignore configuration files
+build.config.ts
+tsconfig.json
+biome.json
+config.js
+.env
+
+# Ignore test files
+__tests__/
+tests/
+test/

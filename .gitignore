@@ -1,0 +1,22 @@
+# Ignore Node.js modules
+node_modules/
+
+# Ignore coverage reports
+coverage/
+
+# Ignore TypeScript compilation output
+lib/
+
+# Ignore the Workflow folder
+.history/
+.github/
+
+# Ignore editor-specific files
+.vscode/
+.idea/
+*.sublime-project
+*.sublime-workspace
+
+# Ignore system-specific files
+.DS_Store
+Thumbs.db

@@ -1,0 +1,44 @@
+{
+	"name": "akore",
+	"version": "2.0.0",
+	"description": "Powerful Transpiler maker for JavaScript/TypeScript",
+	"type": "module",
+	"main": "./lib/index.cjs",
+	"exports": {
+		".": {
+			"import": "./lib/index.mjs",
+			"require": "./lib/index.cjs"
+		}
+	},
+	"imports": {
+		"@common/*": {
+			"import": "./lib/common/*.mjs",
+			"require": "./lib/common/*.cjs"
+		},
+		"@core/*": {
+			"import": "./lib/core/*.mjs",
+			"require": "./lib/core/*.cjs"
+		}
+	},
+	"types": "./lib/index.d.ts",
+	"files": ["lib"],
+	"scripts": {
+		"build": "biome check --write src/ && unbuild",
+		"test": "bun test",
+		"prepare": "npm run build"
+	},
+	"keywords": ["transpiler"],
+	"author": "Kodeko Studios",
+	"license": "Kodeko Studios Proprietary License",
+	"devDependencies": {
+		"@biomejs/biome": "1.8.3",
+		"@types/bun": "1.1.6",
+		"@types/node": "20.14.9",
+		"mitata": "0.1.11",
+		"unbuild": "2.0.0"
+	},
+	"engines": {
+		"node": ">=16.0.0",
+		"npm": ">=8.0.0"
+	}
+}

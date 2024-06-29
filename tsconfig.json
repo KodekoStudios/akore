@@ -1,0 +1,54 @@
+{
+	"compilerOptions": {
+		/* Language and Environment */
+		"target": "ES2022",
+		"experimentalDecorators": true,
+		"emitDecoratorMetadata": true,
+
+		/* Modules */
+		"module": "ESNext",
+		"rootDir": "./src/",
+		"moduleResolution": "Node",
+		"typeRoots": ["node_modules/@types"],
+		"resolveJsonModule": true,
+		"paths": {
+			"@common/*": ["./src/common/*.ts"],
+			"@core/*": ["./src/core/*.ts"],
+			"@*": ["./src/*"]
+		},
+
+		/* Emit */
+		"declaration": true,
+		"emitDeclarationOnly": true,
+		"sourceMap": true,
+		"outDir": "./lib/",
+		"removeComments": false,
+		"importHelpers": true,
+		"downlevelIteration": true,
+
+		/* Interop Constraints */
+		"allowSyntheticDefaultImports": true,
+		"esModuleInterop": true,
+		"forceConsistentCasingInFileNames": true,
+
+		/* Type Checking */
+		"strict": true,
+		"noImplicitAny": true,
+		"strictNullChecks": true,
+		"strictFunctionTypes": true,
+		"strictBindCallApply": true,
+		"strictPropertyInitialization": true,
+		"noImplicitThis": true,
+		"useUnknownInCatchVariables": true,
+		"noUnusedLocals": true,
+		"noUnusedParameters": true,
+		"noImplicitReturns": true,
+		"noFallthroughCasesInSwitch": true,
+		"noImplicitOverride": true,
+
+		/* Completeness */
+		"skipLibCheck": false
+	},
+	"include": ["./src/**/*.ts", "test/lexer.test.ts"],
+	"exclude": ["node_modules", "lib", "*.config.ts"]
+}
