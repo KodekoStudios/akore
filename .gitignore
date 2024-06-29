@@ -10,6 +10,7 @@ lib/
 # Ignore the Workflow folder
 .history/
 .github/
+.git/
 
 # Ignore editor-specific files
 .vscode/
