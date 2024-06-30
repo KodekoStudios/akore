@@ -70,6 +70,7 @@ export class Token<Transpiler> {
 					// If not, the character should be ignored
 					if (competence.patterns.inside === undefined || competence.patterns.inside?.test(char)) {
 						this.inside += char;
+						continue;
 					}
 
 					// Check if the competence is unstoppable
