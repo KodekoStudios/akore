@@ -8,6 +8,7 @@ coverage/
 lib/
 
 # Ignore the Workflow folder
+.npmignore
 .history/
 .github/
 .git/
