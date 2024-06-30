@@ -162,7 +162,9 @@ export class Lexer<Transpiler> {
 				continue;
 			}
 
-			yield new Token({ competence, match });
+			const token = new Token({ competence, match });
+			yield token;
+			pattern.lastIndex = match.index + token.total.length;
 		}
 	}
 }
