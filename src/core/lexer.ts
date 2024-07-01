@@ -3,6 +3,7 @@ import type { BaseCompetence } from "./base.competence";
 
 /**
  * Represents a token in the lexer.
+ * 
  * @template Transpiler The type of the transpiler.
  */
 export class Token<Transpiler> {
@@ -20,6 +21,7 @@ export class Token<Transpiler> {
 
 	/**
 	 * Creates a new Token instance.
+	 * 
 	 * @param competence The competence associated with the token.
 	 * @param match The regular expression match array.
 	 */
