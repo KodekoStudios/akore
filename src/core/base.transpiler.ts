@@ -21,7 +21,7 @@ export abstract class BaseTranspiler {
 
 	/**
 	 * Creates a new instance of the base transpiler.
-	 * 
+	 *
 	 * @param schemas The schemas to register.
 	 * @param logger The logger instance.
 	 * @param lexer The lexer instance.

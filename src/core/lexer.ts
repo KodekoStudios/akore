@@ -1,12 +1,13 @@
 import { Logger } from "@common/logger";
 import type { BaseCompetence } from "./base.competence";
+import type { BaseTranspiler } from "./base.transpiler";
 
 /**
  * Represents a token in the lexer.
- * 
+ *
  * @template Transpiler The type of the transpiler.
  */
-export class Token<Transpiler> {
+export class Token<Transpiler extends BaseTranspiler> {
 	private opener = "";
 	private closer = "";
 
@@ -21,7 +22,7 @@ export class Token<Transpiler> {
 
 	/**
 	 * Creates a new Token instance.
-	 * 
+	 *
 	 * @param competence The competence associated with the token.
 	 * @param match The regular expression match array.
 	 */
@@ -113,7 +114,7 @@ export class Token<Transpiler> {
  *
  * @template Transpiler - The type of the transpiler associated with the lexer.
  */
-export class Lexer<Transpiler> {
+export class Lexer<Transpiler extends BaseTranspiler> {
 	/** The competences available for tokenization. */
 	public readonly competences: Map<string, BaseCompetence<Transpiler>>;
 

@@ -1,3 +1,4 @@
+import type { BaseTranspiler } from "./base.transpiler";
 import type { Token } from "./lexer";
 import type { Node } from "./node";
 
@@ -34,18 +35,41 @@ export interface Patterns {
 /**
  * Represents the previous and subsequent competences that will be consumed.
  */
-export interface Eaters<T> {
+export interface Eaters<T extends BaseTranspiler> {
 	/**
 	 * Specifies the competences that should be consumed before the current competence.
+	 *
 	 * It can be an array of `BaseCompetence` classes or a function that takes a `BaseCompetence<T>` instance and returns a boolean.
 	 */
-	readonly before?: (typeof BaseCompetence)[] | ((competence: BaseCompetence<T>) => boolean);
+	readonly before?:
+		| (typeof BaseCompetence)[]
+		| ((competence: BaseCompetence<T>, index: number) => boolean);
 
 	/**
 	 * Specifies the competences that should be consumed after the current competence.
+	 *
 	 * It can be an array of `BaseCompetence` classes or a function that takes a `BaseCompetence<T>` instance and returns a boolean.
 	 */
-	readonly after?: (typeof BaseCompetence)[] | ((competence: BaseCompetence<T>) => boolean);
+	readonly after?:
+		| (typeof BaseCompetence)[]
+		| ((competence: BaseCompetence<T>, index: number) => boolean);
+}
+
+/**
+ * Represents the previous and subsequent competences that has been consumed.
+ *
+ * @template T The type of the transpiler.
+ */
+export interface Eated<T extends BaseTranspiler> {
+	/**
+	 * The consumed competences before the current competence.
+	 */
+	before?: BaseCompetence<T>[];
+
+	/**
+	 * The consumed competences after the current competence.
+	 */
+	after?: BaseCompetence<T>[];
 }
 
 /**
@@ -53,7 +77,10 @@ export interface Eaters<T> {
  *
  * @template Transpiler The type of the transpiler.
  */
-export abstract class BaseCompetence<Transpiler> {
+export abstract class BaseCompetence<Transpiler extends BaseTranspiler> {
+	/** The transpiler instance. */
+	protected readonly transpiler: Transpiler;
+
 	/** The identifier of the competence. */
 	public abstract readonly identifier: string;
 
@@ -63,8 +90,8 @@ export abstract class BaseCompetence<Transpiler> {
 	/** The eaters used by the competence. */
 	public readonly eaters?: Eaters<Transpiler>;
 
-	/** The transpiler instance. */
-	protected readonly transpiler: Transpiler;
+	/** The previous and subsequent competences that has been consumed. */
+	public eated?: Eated<Transpiler>;
 
 	/**
 	 * Creates a new instance of the BaseCompetence class.
