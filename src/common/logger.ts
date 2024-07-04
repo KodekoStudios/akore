@@ -126,6 +126,8 @@ export class Logger {
 			this.time(),
 			this.format(this.stylize(messages.join(" "), AnsiStyle.Red)),
 		);
+
+		throw new Error(messages.join(" "));
 	}
 
 	/**
