@@ -1,6 +1,6 @@
 import type { BaseTranspiler } from "./base.transpiler";
-import type { Token } from "./lexer";
 import type { Node } from "./node";
+import type { Token } from "./token";
 
 /**
  * Represents a set of patterns used for matching and manipulating strings.
@@ -35,41 +35,16 @@ export interface Patterns {
 /**
  * Represents the previous and subsequent competences that will be consumed.
  */
-export interface Eaters<T extends BaseTranspiler> {
+export interface Eaters {
 	/**
 	 * Specifies the competences that should be consumed before the current competence.
-	 *
-	 * It can be an array of `BaseCompetence` classes or a function that takes a `BaseCompetence<T>` instance and returns a boolean.
 	 */
-	readonly before?:
-		| (typeof BaseCompetence)[]
-		| ((competence: BaseCompetence<T>, index: number) => boolean);
+	readonly before?: string[];
 
 	/**
 	 * Specifies the competences that should be consumed after the current competence.
-	 *
-	 * It can be an array of `BaseCompetence` classes or a function that takes a `BaseCompetence<T>` instance and returns a boolean.
 	 */
-	readonly after?:
-		| (typeof BaseCompetence)[]
-		| ((competence: BaseCompetence<T>, index: number) => boolean);
-}
-
-/**
- * Represents the previous and subsequent competences that has been consumed.
- *
- * @template T The type of the transpiler.
- */
-export interface Eated<T extends BaseTranspiler> {
-	/**
-	 * The consumed competences before the current competence.
-	 */
-	before?: BaseCompetence<T>[];
-
-	/**
-	 * The consumed competences after the current competence.
-	 */
-	after?: BaseCompetence<T>[];
+	readonly after?: string[];
 }
 
 /**
@@ -88,10 +63,7 @@ export abstract class BaseCompetence<Transpiler extends BaseTranspiler> {
 	public abstract readonly patterns: Patterns;
 
 	/** The eaters used by the competence. */
-	public readonly eaters?: Eaters<Transpiler>;
-
-	/** The previous and subsequent competences that has been consumed. */
-	public eated?: Eated<Transpiler>;
+	public readonly eaters?: Eaters;
 
 	/**
 	 * Creates a new instance of the BaseCompetence class.

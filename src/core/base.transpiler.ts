@@ -1,10 +1,11 @@
 import { Logger } from "@common/logger";
 import { typify } from "@common/typify";
 import type { BaseCompetence } from "./base.competence";
-import { Lexer, type Token } from "./lexer";
+import { Lexer } from "./lexer";
 import type { Node } from "./node";
 import { Registry } from "./registry";
 import type { Schema } from "./schema";
+import type { Token } from "./token";
 
 /**
  * The base class for all transpilers.
