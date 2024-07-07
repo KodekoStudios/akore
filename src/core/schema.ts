@@ -1,4 +1,5 @@
 import { isChild, isImplementing } from "@common/classes";
+import { format } from "@common/format";
 import { Node } from "./node";
 
 export class Schema<Type> {
@@ -32,11 +33,11 @@ export class Schema<Type> {
 	/**
 	 * Returns a string representation of the Schema object.
 	 *
-	 * @param level The indentation level for the string representation. Default is 1.
+	 * @param indent The indentation level for the string representation. Default is 1.
 	 * @returns A string representation of the Schema object.
 	 */
-	public toString(level = 1): string {
-		return `Schema <${this.identifier}> {\n\t${this._toString(this.structure, level)}${"\t".repeat(level - 1)}\n}`;
+	public toString(indent = 0): string {
+		return `Schema <${this.identifier}>: ${format(this._toString(this.structure), indent).trimStart()}`;
 	}
 
 	/**
@@ -94,15 +95,13 @@ export class Schema<Type> {
 	 * Returns a string representation of the given schema.
 	 *
 	 * @param schema The schema to convert to a string.
-	 * @param level The indentation level for the string representation.
+	 * @param indent The indentation level for the string representation.
 	 * @returns The string representation of the schema.
 	 */
-	protected _toString(schema = this.structure, level = 0): string {
-		const indent = "\t".repeat(level > 0 ? level : 0);
-
+	protected _toString(schema = this.structure, indent = 0): string {
 		// If the schema is an instance of Schema, return the string representation of the schema.
 		if (schema instanceof Schema) {
-			return schema.toString(level + 1);
+			return schema.toString(indent + 1);
 		}
 
 		// If the schema is null, return "null".
@@ -112,6 +111,10 @@ export class Schema<Type> {
 
 		// If the schema is a string, return the string wrapped in quotes.
 		if (typeof schema === "string") {
+			if (/string|number|bigint|boolean|symbol|undefined|object|function/.test(schema)) {
+				return schema;
+			}
+
 			return `"${schema}"`;
 		}
 
@@ -143,10 +146,10 @@ export class Schema<Type> {
 		// If the schema is an object, return a string representation of the object.
 		if (typeof schema === "object" && schema !== null) {
 			const entries = Object.entries(schema as Type & object).map(([key, value]) => {
-				return `${indent}${key}: ${this._toString(value, level + 1)}`;
+				return `${key}: ${this._toString(value, indent)}`;
 			});
 
-			return `{\n${entries.join("\n")}\n}`;
+			return `{\n${format(entries.join("\n"), indent)}\n}`;
 		}
 
 		// If the schema is a class, return the class name.
