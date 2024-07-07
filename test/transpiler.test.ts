@@ -1,11 +1,16 @@
 import { describe, it, expect } from "bun:test";
 
-import type { Registry } from "../src/core/registry";
-import { Lexer, type Token } from "../src/core/lexer";
-import { BaseCompetence, type Patterns } from "../src/core/base.competence";
-import { BaseTranspiler } from "../src/core/base.transpiler";
-import { Schema } from "../src/core/schema";
-import { Node } from "../src/core/node";
+import {
+	type Registry,
+	type Patterns,
+	type Token,
+	BaseTranspiler,
+	BaseCompetence,
+	LexicalFlags,
+	Schema,
+	Lexer,
+	Node,
+} from "../src/";
 
 type NodeTypes = "program" | "literal";
 
@@ -47,6 +52,19 @@ class CLiteral extends BaseCompetence<TRS> {
 	}
 }
 
+class CBlock extends BaseCompetence<TRS> {
+	public readonly identifier = "test:block";
+	public readonly patterns: Patterns = {
+		foremost: /\{/,
+		closer: /\}/,
+	};
+	public readonly flags = LexicalFlags.DIRECT_ENTRY | LexicalFlags.UNSTOPPABLE;
+
+	resolve({ inside = "" }: Token<TRS>): Node<string, unknown> {
+		return new Literal(inside);
+	}
+}
+
 class TRS extends BaseTranspiler {
 	public declare registry: Registry<NodeTypes>;
 
@@ -68,10 +86,11 @@ class TRS extends BaseTranspiler {
 		const program = new Program();
 
 		for (const node of nodes) {
+			this.registry.validate(node);
 			program.push([node]);
 		}
 
-		return program.serialize();
+		return this.registry.resolve(program);
 	}
 }
 
@@ -79,9 +98,9 @@ describe("transpiler", () => {
 	it("should transpile a simple program", () => {
 		const transpiler = new TRS();
 
-		transpiler.declare(new CLiteral(transpiler));
+		transpiler.declare(new CLiteral(transpiler), new CBlock(transpiler));
 
-		const result = transpiler.transpile("literal(testing)");
-		expect(result).toBe("testing");
+		const result = transpiler.transpile("literal(testing) { block! }");
+		expect(result).toBe("testing\nblock! ");
 	});
 });

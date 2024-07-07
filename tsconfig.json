@@ -49,6 +49,6 @@
 		/* Completeness */
 		"skipLibCheck": false
 	},
-	"include": ["./src/**/*.ts", "test/lexer.test.ts"],
+	"include": ["./src/**/*.ts"],
 	"exclude": ["node_modules", "lib", "*.config.ts"]
 }
