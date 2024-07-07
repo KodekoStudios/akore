@@ -3,6 +3,24 @@ import type { Node } from "./node";
 import type { Token } from "./token";
 
 /**
+ * Flags that control the lexical analysis behavior.
+ */
+export enum LexicalFlags {
+	/**
+	 * If this flag is active, the tokenizer will continue tokenizing even if there is a pattern for inside,
+	 * and that pattern does not match a character. The invalid character will be completely ignored.
+	 */
+	UNSTOPPABLE = 1,
+
+	/**
+	 * If this flag is active, the tokenizer will start tokenizing the inside even if there is no opening pattern.
+	 *
+	 * It will continue tokenizing until it reaches the closing pattern.
+	 */
+	DIRECT_ENTRY = 2,
+}
+
+/**
  * Represents a set of patterns used for matching and manipulating strings.
  */
 export interface Patterns {
@@ -23,6 +41,7 @@ export interface Patterns {
 
 	/**
 	 * Specifies whether the pattern is unstoppable, meaning it cannot be interrupted by other patterns.
+	 * @deprecated Use the LexicalFlags.UNSTOPPABLE flag instead.
 	 */
 	readonly unstoppable?: boolean;
 
@@ -64,6 +83,11 @@ export abstract class BaseCompetence<Transpiler extends BaseTranspiler> {
 
 	/** The eaters used by the competence. */
 	public readonly eaters?: Eaters;
+
+	/**
+	 * The flags that control the lexical analysis behavior.
+	 */
+	public readonly flags?: LexicalFlags;
 
 	/**
 	 * Creates a new instance of the BaseCompetence class.

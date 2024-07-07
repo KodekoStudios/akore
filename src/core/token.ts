@@ -1,21 +1,21 @@
-import type { BaseCompetence } from "./base.competence";
+import { type BaseCompetence, LexicalFlags } from "./base.competence";
 import type { BaseTranspiler } from "./base.transpiler";
 
 /**
  * Represents the previous and subsequent tokens that has been consumed.
  *
- * @template T The type of the transpiler.
+ * @template Transpiler The type of the transpiler.
  */
-export interface Eated<T extends BaseTranspiler> {
+export interface Eated<Transpiler extends BaseTranspiler> {
 	/**
 	 * The consumed competences before the current competence.
 	 */
-	before: Token<T>[];
+	before: Token<Transpiler>[];
 
 	/**
 	 * The consumed competences after the current competence.
 	 */
-	after: Token<T>[];
+	after: Token<Transpiler>[];
 }
 
 /**
@@ -57,57 +57,109 @@ export class Token<Transpiler extends BaseTranspiler> {
 		this.match = match;
 		this.eated = { before: [], after: [] };
 
-		// Check if the competence has an opener and a closer
-		if (match.index !== undefined && match.input && competence.patterns.opener) {
-			// Get the text before the match
-			const after = match.input.slice(match.index + match[0].length);
+		// Check if the match has an index and input
+		if (match.index !== undefined && match.input) {
+			// Get the flags from the competence
+			const { flags = 0 } = competence;
 
-			// Check if the opener is present next to the match
-			if (after && competence.patterns.opener.test(after[0])) {
-				this.opener = after[0]; // Set the opener
-				this.inside = ""; // Initialize the inside
+			// Check if the competence is forced inside processing
+			const forced = flags & LexicalFlags.DIRECT_ENTRY;
 
-				// Loop through the text after the match
-				for (let i = 1, depth = 0; i < after.length; i++) {
-					const char = after[i];
+			// Get the patterns from the competence
+			const { opener, closer, inside } = competence.patterns;
 
-					// Check if the closer is present and the depth is 0
-					// This means the end of the inside has been reached
-					if (competence.patterns.closer?.test(char) && depth === 0) {
-						this.closer = char;
+			if (forced || opener) {
+				// Check if the closer is present
+				if (closer === undefined) {
+					throw new Error("Inside processing requires a closer.");
+				}
+
+				// Get the text after the match
+				const after = match.input.slice(match.index + match[0].length);
+
+				// Check if the opener is present next to the match
+				if (after && (forced || opener?.test(after[0]))) {
+					this.opener = forced ? "" : after[0]; // Set the opener
+					this.inside = ""; // Initialize the inside
+
+					// Loop through the text after the match
+					for (let i = 1, depth = 0; i < after.length; i++) {
+						const char = after[i];
+
+						// Check if the closer is present and the depth is 0
+						// This means the end of the inside has been reached
+						if (competence.patterns.closer?.test(char) && depth === 0) {
+							this.closer = char;
+							break;
+						}
+
+						// Check if the opener is present
+						// This means the depth should be increased
+						if (opener?.test(char)) {
+							depth++;
+						}
+
+						// Check if the closer is present (the depth is not 0 cuz it would have been caught above)
+						// This means the depth should be decreased
+						if (closer.test(char)) {
+							depth--;
+						}
+
+						// Check if the character is allowed inside the inside
+						// If not, the character should be ignored
+						if (inside === undefined || inside?.test(char)) {
+							this.inside += char;
+							continue;
+						}
+
+						// Check if the competence is unstoppable
+						// If so, the current character should be ignored and continue to the next
+						if (flags & LexicalFlags.UNSTOPPABLE) {
+							continue;
+						}
+
+						// If none of the above conditions are met, stop the loop
 						break;
 					}
-
-					// Check if the opener is present
-					// This means the depth should be increased
-					if (competence.patterns.opener.test(char)) {
-						depth++;
-					}
-
-					// Check if the closer is present (the depth is not 0 cuz it would have been caught above)
-					// This means the depth should be decreased
-					if (competence.patterns.closer?.test(char)) {
-						depth--;
-					}
-
-					// Check if the character is allowed inside the inside
-					// If not, the character should be ignored
-					if (competence.patterns.inside === undefined || competence.patterns.inside?.test(char)) {
-						this.inside += char;
-						continue;
-					}
-
-					// Check if the competence is unstoppable
-					// If so, the current character should be ignored and continue to the next
-					if (competence.patterns.unstoppable) {
-						continue;
-					}
-
-					// If none of the above conditions are met, stop the loop
-					break;
 				}
 			}
 		}
+	}
+
+	/**
+	 * Gets the start index of the token.
+	 *
+	 * @returns The start index of the token.
+	 */
+	public get start(): number {
+		return this.match.index ?? 0;
+	}
+
+	/**
+	 * Gets the end index of the token.
+	 *
+	 * @returns The end index of the token.
+	 */
+	public get end() {
+		return this.start + this.total.length;
+	}
+
+	/**
+	 * Gets the line number of the token.
+	 *
+	 * @returns The line number of the token.
+	 */
+	public get line(): number {
+		return 1 + (this.match.input?.slice(0, this.start).match(/\n/g)?.length ?? 0);
+	}
+
+	/**
+	 * Gets the column number of the token.
+	 *
+	 * @returns The column number of the token.
+	 */
+	public get column(): number {
+		return this.start - (this.match.input?.lastIndexOf("\n", this.start) ?? 0);
 	}
 
 	/**
