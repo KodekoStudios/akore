@@ -123,7 +123,8 @@ export abstract class BaseTranspiler {
 			throw new Error(`The type "${node.type}" does not match any schema.`);
 		}
 
-		throw new Error(`The following value does not match the expected schema:\nExpected:\n ${expected.toString(2)}\n\nReceived:\n Node <${node.constructor.name}>: ${typify(node.value, 2)}`,
+		throw new Error(
+			`The following value does not match the expected schema:\nExpected:\n ${expected.toString(2)}\n\nReceived:\n Node <${node.constructor.name}>: ${typify(node.value, 2)}`,
 		);
 	}
 }

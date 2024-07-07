@@ -100,8 +100,11 @@ export class Logger {
 		const header = this.stylize(` ${texts.join(" > ")} `, style, AnsiStyle.Bold);
 		const time = this.stylize(` ${this.time()} `, style, AnsiStyle.Bold);
 
-		const separator = "".padStart(Math.round((process.stdout.columns / 1.5) - header.length - time.length), "-")
-		return `${header} ${separator} ${time}`
+		const separator = "".padStart(
+			Math.round(process.stdout.columns / 1.5 - header.length - time.length),
+			"-",
+		);
+		return `${header} ${separator} ${time}`;
 	}
 
 	public body(...texts: string[]): string[] {
@@ -168,7 +171,7 @@ export class Logger {
 					"",
 					this.header(header),
 					...description.map((t) => this.format(this.stylize(t, AnsiStyle.Bold))),
-					...body.flatMap(x => this.body(...x.split("\n"))),
+					...body.flatMap((x) => this.body(...x.split("\n"))),
 					"",
 					"",
 				].join("\n"),
@@ -183,7 +186,7 @@ export class Logger {
 	 */
 	protected time() {
 		const date = new Date();
-		return `${date.toLocaleDateString()} ${date.toLocaleTimeString()}`
+		return `${date.toLocaleDateString()} ${date.toLocaleTimeString()}`;
 	}
 }
 
