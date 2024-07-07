@@ -99,8 +99,8 @@ export abstract class BaseTranspiler {
 				yield this.nodify(token);
 			} catch (error) {
 				this.logger.throw(
-					`Error compiling "${token.total}":\n`,
-					this.logger.format((<Error>error).stack as string),
+					`Error processing "${token.total}" at Ln ${token.line}, Col ${token.column}`,
+					(<Error>error).stack,
 				);
 				break;
 			}
@@ -123,8 +123,7 @@ export abstract class BaseTranspiler {
 			throw new Error(`The type "${node.type}" does not match any schema.`);
 		}
 
-		throw new Error(
-			`The following value does not match the expected schema:\nExpected:\n\t${expected.toString(2)}\n\nReceived:\n\t${node.constructor.name} {\n\t${typify(node.value, 2)}\n\t}`,
+		throw new Error(`The following value does not match the expected schema:\nExpected:\n ${expected.toString(2)}\n\nReceived:\n Node <${node.constructor.name}>: ${typify(node.value, 2)}`,
 		);
 	}
 }
