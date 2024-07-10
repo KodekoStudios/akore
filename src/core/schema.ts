@@ -146,10 +146,10 @@ export class Schema<Type> {
 		// If the schema is an object, return a string representation of the object.
 		if (typeof schema === "object" && schema !== null) {
 			const entries = Object.entries(schema as Type & object).map(([key, value]) => {
-				return `${key}: ${this._toString(value, indent)}`;
+				return `${key}: ${this._toString(value, indent)};`;
 			});
 
-			return `{\n${format(entries.join("\n"), indent)}\n}`;
+			return `{\n${format(entries.join("\n"), indent + 1)}\n}`;
 		}
 
 		// If the schema is a class, return the class name.

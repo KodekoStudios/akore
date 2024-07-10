@@ -1,8 +1,10 @@
+import { format } from "./format";
+
 /**
  * Converts a given value to its corresponding type as a string representation.
  *
  * @param value The value to convert to a type string.
- * @param level The current level of indentation for nested structures.
+ * @param indent The current level of indentation for nested structures.
  * @returns The type of the value as a string representation.
  *
  * @example
@@ -11,9 +13,7 @@
  * typify([1, 2, 3]); // "number[]"
  * typify({ name: "Alice", age: 30 }); // "{\n\tname: string;\n\tage: number;\n}"
  */
-export function typify(value: unknown, level = 1): string {
-	const indent = "\t".repeat(level > 0 ? level : 0);
-
+export function typify(value: unknown, indent = 1): string {
 	if (typeof value === "string") {
 		return "string";
 	}
@@ -35,9 +35,26 @@ export function typify(value: unknown, level = 1): string {
 	}
 
 	if (Array.isArray(value)) {
-		if (value.length === 0) return "any[]";
+		// If the array is empty, return "never[]".
+		if (value.length === 0) {
+			return "never[]";
+		}
+
+		// Create a set of all types in the array.
+		// Set is used to remove duplicates.
 		const types = new Set(value.map((el) => typify(el, 0)));
-		if (types.size === 1) return `${types.values().next().value}[]`;
+
+		// If theres no types, return "any[]".
+		if (types.size === 0) {
+			return "any[]";
+		}
+
+		// If theres only one type, return "{type}[]".
+		if (types.size === 1) {
+			return `${types.values().next().value}[]`;
+		}
+
+		// If there are multiple types, return a union of all types.
 		return `(${[...types].join(" | ")})[]`;
 	}
 
@@ -48,10 +65,8 @@ export function typify(value: unknown, level = 1): string {
 		}
 
 		// Handle plain objects
-		const entries = Object.entries(value)
-			.map(([key, val]) => `${"\t".repeat(level + 1)}${key}: ${typify(val, level + 1)}`)
-			.join(";\n");
-		return `${"\t".repeat(level - 1 || 0)}{\n${entries}\n${indent}}`;
+		const entries = Object.entries(value).map(([key, val]) => `${key}: ${typify(val, indent)};`);
+		return `{\n${format(entries.join("\n"), indent + 1)}\n}`;
 	}
 
 	if (typeof value === "function") {
