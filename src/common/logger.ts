@@ -20,7 +20,7 @@ export class Logger {
 		prefix = "AKORE",
 		from = "LOG",
 		debug = true,
-	}: { prefix?: string; from?: string; debug?: boolean }) {
+	}: { prefix?: string; from?: string; debug?: boolean } = {}) {
 		this.PREFIX = prefix;
 		this.FROM = from;
 		this.DEBUG = debug;
@@ -34,7 +34,7 @@ export class Logger {
 	 */
 	public inform(description?: string, ...messages: unknown[]): void {
 		this.log({
-			header: { texts: [this.PREFIX, this.FROM, "INFORMATION"], style: AnsiStyle.BgGreen },
+			header: { texts: [this.PREFIX, this.FROM, "INFORMATION"], style: ANSICodes.BgGreen },
 			description: description?.split(/\n/g) ?? [],
 			body: messages.map(String),
 		});
@@ -49,7 +49,7 @@ export class Logger {
 	public debug(description?: string, ...messages: unknown[]): void {
 		if (this.DEBUG) {
 			this.log({
-				header: { texts: [this.PREFIX, this.FROM, "DEBUG"], style: AnsiStyle.BgMagenta },
+				header: { texts: [this.PREFIX, this.FROM, "DEBUG"], style: ANSICodes.BgMagenta },
 				description: description?.split(/\n/g) ?? [],
 				body: messages.map(String),
 			});
@@ -64,7 +64,7 @@ export class Logger {
 	 */
 	public warn(description?: string, ...messages: unknown[]): void {
 		this.log({
-			header: { texts: [this.PREFIX, this.FROM, "WARNING"], style: AnsiStyle.BgYellow },
+			header: { texts: [this.PREFIX, this.FROM, "WARNING"], style: ANSICodes.BgYellow },
 			description: description?.split(/\n/g) ?? [],
 			body: messages.map(String),
 		});
@@ -78,7 +78,7 @@ export class Logger {
 	 */
 	public throw(description?: string, ...messages: unknown[]): void {
 		this.log({
-			header: { texts: [this.PREFIX, this.FROM, "ERROR"], style: AnsiStyle.BgRed },
+			header: { texts: [this.PREFIX, this.FROM, "ERROR"], style: ANSICodes.BgRed },
 			description: description?.split(/\n/g) ?? [],
 			body: messages.map(String),
 		});
@@ -95,10 +95,10 @@ export class Logger {
 	 */
 	public header({
 		texts,
-		style = AnsiStyle.BgBlue,
-	}: { texts: string[]; style?: AnsiStyle }): string {
-		const header = this.stylize(` ${texts.join(" > ")} `, style, AnsiStyle.Bold);
-		const time = this.stylize(` ${this.time()} `, style, AnsiStyle.Bold);
+		style = ANSICodes.BgBlue,
+	}: { texts: string[]; style?: ANSICodes }): string {
+		const header = this.stylize(` ${texts.join(" > ")} `, style, ANSICodes.Bold);
+		const time = this.stylize(` ${this.time()} `, style, ANSICodes.Bold);
 
 		const separator = "".padStart(
 			Math.round(process.stdout.columns / 1.5 - header.length - time.length),
@@ -107,8 +107,13 @@ export class Logger {
 		return `${header} ${separator} ${time}`;
 	}
 
+	/**
+	 * Formats the given text as a body with a leading pipe character.
+	 * @param texts The text to format as a body.
+	 * @returns The formatted body text.
+	 */
 	public body(...texts: string[]): string[] {
-		return texts.map((t) => this.stylize(format(` │ ${t}`, 2), AnsiStyle.Dim));
+		return texts.map((t) => this.stylize(format(` │ ${t}`, 2), ANSICodes.Dim));
 	}
 
 	/**
@@ -117,7 +122,7 @@ export class Logger {
 	 * @param styles The ANSI styles to apply.
 	 * @returns The string with the applied ANSI styles.
 	 */
-	public ANSI(...styles: AnsiStyle[]): `\u001B[${string}m` {
+	public ANSI(...styles: (number | ANSICodes)[]): `\u001B[${string}m` {
 		return `\x1b[${styles.join(";")}m`;
 	}
 
@@ -128,14 +133,52 @@ export class Logger {
 	 * @param styles The ANSI styles to apply.
 	 * @returns The stylized text.
 	 */
-	public stylize(text: string, ...styles: AnsiStyle[]): string {
-		const code = this.ANSI(...styles);
+	public stylize(text: string, ...styles: (number | ANSICodes)[]): string {
+		const reset = styles
+			.map((x) => {
+				const style = ANSICodes[+x];
+				return (typeof x === "number" && ((x >= 30 && x <= 37) || (x >= 90 && x <= 97))) ||
+					x === ANSICodes.RGBColor ||
+					x === ANSICodes.BITColor
+					? ANSICodes.ResetColor
+					: (typeof x === "number" && ((x >= 40 && x <= 47) || (x >= 100 && x <= 107))) ||
+							x === ANSICodes.RGBBackground ||
+							x === ANSICodes.BITBackground
+						? ANSICodes.ResetBgColor
+						: style && !style.startsWith("Reset")
+							? ANSICodes[`Reset${style}` as unknown as keyof typeof ANSICodes]
+							: undefined;
+			})
+			.filter((x, i, y) => x && y.indexOf(x) === i) as ANSICodes[];
 
-		// biome-ignore lint/suspicious/noControlCharactersInRegex: We need to match the control character.
-		return code + text.replace(/\u001B\[0m/g, AnsiStyle.Reset + code) + AnsiStyle.Reset;
+		return this.ANSI(...styles) + text + this.ANSI(...reset);
 	}
 
 	/**
+	 * Parses the given text and applies ANSI styles.
+	 *
+	 * @param text The text to parse.
+	 * @returns The parsed text with ANSI styles applied.
+	 */
+	public parse(text: string) {
+		const codes = Object.fromEntries(
+			Object.keys(ANSICodes)
+				.filter((k) => Number.isNaN(+k))
+				.map((k) => [k.toLowerCase(), ANSICodes[k as keyof typeof ANSICodes]]),
+		);
+		const regex = /{\s*([\w\d;]+)\s*:\s*([^{}]+)}/gim;
+
+		while (regex.test(text)) {
+			text = text.replace(regex, (_, code: string, content: string) =>
+				this.stylize(content, ...code.split(";").map((x) => codes[x.toLowerCase()] ?? +x)),
+			);
+		}
+
+		return text;
+	}
+
+	/**
+	 *
 	 * Formats the given text with a leading and trailing newline and a tab character.
 	 *
 	 * @param text The text to format.
@@ -159,22 +202,17 @@ export class Logger {
 	}: {
 		header: {
 			texts: string[];
-			style?: AnsiStyle;
+			style?: ANSICodes;
 		};
 		description: string[];
 		body: string[];
 	}): void {
 		console.log(
 			this.format(
-				[
-					"",
-					"",
-					this.header(header),
-					...description.map((t) => this.format(this.stylize(t, AnsiStyle.Bold))),
-					...body.flatMap((x) => this.body(...x.split("\n"))),
-					"",
-					"",
-				].join("\n"),
+				`\n\n${this.header(header)}\n${description.map((t) => this.format(this.parse(`{bold:${t}}`))).join("\n")}\n${body
+					.flatMap((x) => this.body(...x.split("\n")))
+					.map((x) => this.parse(x))
+					.join("\n")}\n\n\n`,
 			),
 		);
 	}
@@ -190,57 +228,72 @@ export class Logger {
 	}
 }
 
-export enum AnsiStyle {
+export enum ANSICodes {
 	// Reset
-	Reset = "\x1b[0m",
+	ResetAll = 0,
+	ResetBold = 22,
+	ResetItalic = 23,
+	ResetUnderline = 24,
+	ResetBlik = 25,
+	ResetInverse = 27,
+	ResetHidden = 28,
+	ResetStrikethrough = 29,
+	ResetColor = 39,
+	ResetBgColor = 49,
 
 	// Text Styles
-	Bold = "1",
-	Dim = "2",
-	Italic = "3",
-	Underline = "4",
-	Blink = "5",
-	Inverse = "7",
-	Hidden = "8",
-	Strikethrough = "9",
+	Bold = 1,
+	Dim = 2,
+	Italic = 3,
+	Underline = 4,
+	Blink = 5,
+	Inverse = 7,
+	Hidden = 8,
+	Strikethrough = 9,
 
 	// Text Colors
-	Black = "30",
-	Red = "31",
-	Green = "32",
-	Yellow = "33",
-	Blue = "34",
-	Magenta = "35",
-	Cyan = "36",
-	White = "37",
+	RGBColor = "38;2",
+	BITColor = "38;5",
+	RGBBackground = "48;2",
+	BITBackground = "48;5",
+
+	// Text Colors
+	Black = 30,
+	Red = 31,
+	Green = 32,
+	Yellow = 33,
+	Blue = 34,
+	Magenta = 35,
+	Cyan = 36,
+	White = 37,
 
 	// Bright Text Colors
-	BrightBlack = "90",
-	BrightRed = "91",
-	BrightGreen = "92",
-	BrightYellow = "93",
-	BrightBlue = "94",
-	BrightMagenta = "95",
-	BrightCyan = "96",
-	BrightWhite = "97",
+	BrightBlack = 90,
+	BrightRed = 91,
+	BrightGreen = 92,
+	BrightYellow = 93,
+	BrightBlue = 94,
+	BrightMagenta = 95,
+	BrightCyan = 96,
+	BrightWhite = 97,
 
 	// Background Colors
-	BgBlack = "40",
-	BgRed = "41",
-	BgGreen = "42",
-	BgYellow = "43",
-	BgBlue = "44",
-	BgMagenta = "45",
-	BgCyan = "46",
-	BgWhite = "47",
+	BgBlack = 40,
+	BgRed = 41,
+	BgGreen = 42,
+	BgYellow = 43,
+	BgBlue = 44,
+	BgMagenta = 45,
+	BgCyan = 46,
+	BgWhite = 47,
 
 	// Bright Background Colors
-	BgBrightBlack = "100",
-	BgBrightRed = "101",
-	BgBrightGreen = "102",
-	BgBrightYellow = "103",
-	BgBrightBlue = "104",
-	BgBrightMagenta = "105",
-	BgBrightCyan = "106",
-	BgBrightWhite = "107",
+	BgBrightBlack = 100,
+	BgBrightRed = 101,
+	BgBrightGreen = 102,
+	BgBrightYellow = 103,
+	BgBrightBlue = 104,
+	BgBrightMagenta = 105,
+	BgBrightCyan = 106,
+	BgBrightWhite = 107,
 }
