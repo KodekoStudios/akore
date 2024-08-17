@@ -7,6 +7,7 @@ import {
 	BaseTranspiler,
 	BaseCompetence,
 	LexicalFlags,
+	LexerOptions,
 	Schema,
 	Lexer,
 	Node,
@@ -74,12 +75,14 @@ class TRS extends BaseTranspiler {
 				literal: new Schema("literal", "string"),
 				program: new Schema("program", [Node]),
 			},
-			lexer: new Lexer([], "gim"),
+			lexer: new Lexer({
+				options: LexerOptions.FailWhenUnmatch
+			}),
 		});
 	}
 
 	public transpile(source: string): string {
-		const tokens = this.lexer.tokenize(source);
+		const tokens = this.lexer.tokenize(source, "gim");
 
 		const nodes = this.synthesize(tokens) as Generator<Node<NodeTypes, unknown>>;
 
@@ -100,7 +103,13 @@ describe("transpiler", () => {
 
 		transpiler.declare(new CLiteral(transpiler), new CBlock(transpiler));
 
-		const result = transpiler.transpile("literal(testing) { block! }");
+		const result = transpiler.transpile([
+			"literal(line 1)",
+			"literal(line 2)",
+			"literal(line 3)",
+			"literal(line 4)",
+			"literal(testing) GO FUCK YOURSELF { block! }"
+		].join("\n"));
 		expect(result).toBe("testing\nblock! ");
 	});
 });
