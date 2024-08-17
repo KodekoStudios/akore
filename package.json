@@ -1,6 +1,6 @@
 {
 	"name": "akore",
-	"version": "2.1.1",
+	"version": "2.1.2",
 	"description": "Powerful Transpiler maker for JavaScript/TypeScript",
 	"type": "module",
 	"main": "./lib/index.cjs",
