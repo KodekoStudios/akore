@@ -1,3 +1,4 @@
+import { uniq } from "lodash";
 import { format } from "./format";
 
 /**
@@ -14,24 +15,21 @@ import { format } from "./format";
  * typify({ name: "Alice", age: 30 }); // "{\n\tname: string;\n\tage: number;\n}"
  */
 export function typify(value: unknown, indent = 1): string {
-	if (typeof value === "string") {
-		return "string";
+	if (value === undefined || value === null) {
+		return `${value}`;
 	}
 
-	if (typeof value === "number") {
-		return "number";
-	}
+	const type = typeof value;
 
-	if (typeof value === "boolean") {
-		return "boolean";
-	}
-
-	if (value === null) {
-		return "null";
-	}
-
-	if (value === undefined) {
-		return "undefined";
+	if (
+		type === "string" ||
+		type === "number" ||
+		type === "boolean" ||
+		type === "function" ||
+		type === "bigint" ||
+		type === "symbol"
+	) {
+		return type;
 	}
 
 	if (Array.isArray(value)) {
@@ -42,20 +40,20 @@ export function typify(value: unknown, indent = 1): string {
 
 		// Create a set of all types in the array.
 		// Set is used to remove duplicates.
-		const types = new Set(value.map((el) => typify(el, 0)));
+		const types = uniq(value.map((el) => typify(el, 0)));
 
 		// If theres no types, return "any[]".
-		if (types.size === 0) {
+		if (types[0] === undefined) {
 			return "any[]";
 		}
 
 		// If theres only one type, return "{type}[]".
-		if (types.size === 1) {
-			return `${types.values().next().value}[]`;
+		if (types.length === 1) {
+			return `${types[0]}[]`;
 		}
 
 		// If there are multiple types, return a union of all types.
-		return `(${[...types].join(" | ")})[]`;
+		return `(${types.join(" | ")})[]`;
 	}
 
 	if (typeof value === "object") {
@@ -67,10 +65,6 @@ export function typify(value: unknown, indent = 1): string {
 		// Handle plain objects
 		const entries = Object.entries(value).map(([key, val]) => `${key}: ${typify(val, indent)};`);
 		return `{\n${format(entries.join("\n"), indent + 1)}\n}`;
-	}
-
-	if (typeof value === "function") {
-		return "function";
 	}
 
 	return "unknown";
