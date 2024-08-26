@@ -18,7 +18,7 @@ export abstract class BaseTranspiler {
 	public readonly logger: Logger;
 
 	/** The lexer instance. */
-	public readonly lexer: Lexer<typeof this>;
+	public readonly lexer: Lexer<this>;
 
 	/**
 	 * Creates a new instance of the base transpiler.
@@ -38,7 +38,7 @@ export abstract class BaseTranspiler {
 	} = {}) {
 		this.registry = new Registry(schemas);
 		this.logger = logger;
-		this.lexer = lexer as unknown as Lexer<typeof this>;
+		this.lexer = lexer as unknown as Lexer<this>;
 	}
 
 	/**
@@ -55,7 +55,7 @@ export abstract class BaseTranspiler {
 	 *
 	 * @param competences The competences to declare.
 	 */
-	public declare(...competences: BaseCompetence<typeof this>[]) {
+	public declare(...competences: BaseCompetence<this>[]) {
 		for (const competence of competences) {
 			// Check if the competence is already defined
 			if (this.lexer.competences.has(competence.identifier)) {
@@ -93,7 +93,7 @@ export abstract class BaseTranspiler {
 	 * @param tokens The tokens to synthesize.
 	 * @returns A generator that yields nodes.
 	 */
-	public *synthesize(tokens: Iterable<Token<typeof this>>): Generator<Node<string, unknown>> {
+	public *synthesize(tokens: Iterable<Token<this>>): Generator<Node<string, unknown>> {
 		for (const token of tokens) {
 			try {
 				yield this.nodify(token);
@@ -114,7 +114,7 @@ export abstract class BaseTranspiler {
 	 * @returns The converted node.
 	 * @throws Error if the converted node does not match the expected schema.
 	 */
-	public nodify(token: Token<typeof this>): Node<string, unknown> {
+	public nodify(token: Token<this>): Node<string, unknown> {
 		const node = token.competence.resolve(token);
 		if (this.registry.validate(node)) return node;
 
@@ -126,5 +126,88 @@ export abstract class BaseTranspiler {
 		throw new Error(
 			`The following value does not match the expected schema:\nExpected:\n ${expected.toString(2)}\n\nReceived:\n Node <${node.constructor.name}>: ${typify(node.value, 2)}`,
 		);
+	}
+
+	/**
+	 * Tokenizes the input string and returns a tokens array.
+	 * 
+	 * @param source The input string to be tokenized.
+	 * @returns Tokens generated from the input string.
+	 */
+	public tokenize(source: string): Token<this>[] {
+		return this.parse(this.lexer.tokenize(source));
+	}
+
+	public parse(tokens: IterableIterator<Token<this>>): Token<this>[] {
+		const result: Token<this>[] = [];
+		let current = tokens.next();
+
+		while (current.done === false) {
+			if (current.value.competence.eaters) {
+				const { before, after } = current.value.competence.eaters;
+				if (before) {
+					this._handleBefore(before, result, current.value);
+				}
+				if (after) {
+					this._handleAfter(after, tokens, current.value);
+				}
+			}
+
+			result.push(current.value);
+			current = tokens.next();
+		}
+
+		return result;
+	}
+
+	protected _handleBefore(before: string[], result: Token<this>[], token: Token<this>) {
+		for (const expected of before) {
+			const prev = result.pop();
+
+			if (!prev) {
+				// TODO: It would be nice to add the column and references to the error, but I'm a bit lazy.
+				this.logger.throw(`Illegal token {underline;italic:${token.total}} at Ln ${token.line}, Col ${token.column}.`);
+				break; // Unreachable
+			}
+
+			if (prev.competence.identifier === expected) {
+				token.eated.before.push(prev);
+				continue;
+			}
+
+			this.logger.throw(`Unexpected token ${prev?.total}`);
+		}
+	}
+
+	protected _handleAfter(
+		after: string[],
+		tokens: IterableIterator<Token<this>>,
+		token: Token<this>,
+	) {
+		for (const expected of after) {
+
+			const next = tokens.next();
+
+			if (next.done) {
+				this.logger.throw("Unexpected end of input!");
+				break; // Unreachable
+			}
+
+			if (next.value.competence.identifier === expected) {
+				token.eated.after.push(next.value);
+				continue;
+			}
+
+			const { value } = next;
+
+			this.logger.throw(
+				`Unexpected token {underline;italic:${value.total}} at Ln ${value.line}, Col ${value.column}.`,
+				value.match.input
+					?.split(/\n+/g)
+					.slice(Math.max(0, token.line - 4), token.line)
+					.join("\n"),
+				`${" ".repeat(value.column - 1)}{italic:${"^".repeat(value.total.length)} Here!}`,
+			);
+		}
 	}
 }
