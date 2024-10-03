@@ -76,7 +76,7 @@ export class Registry<Type extends string> extends Map<Type, Schema<unknown>> {
 	 * @returns An array of booleans indicating the validation result for each node.
 	 */
 	public batch<Value>(nodes: Node<Type, Value>[]): boolean[] {
-		return nodes.map(node => {
+		return nodes.map((node) => {
 			try {
 				this.validate(node);
 				return true;

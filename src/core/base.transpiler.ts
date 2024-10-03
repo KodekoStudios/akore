@@ -173,7 +173,6 @@ export abstract class BaseTranspiler {
 						.join("\n"),
 					// TODO: I don't really know if this would work.
 					`${" ".repeat(token.column - 1)}{italic:${"^".repeat(token.total.length)} Here!}`,
-
 				);
 				break; // Unreachable
 			}

@@ -1,9 +1,9 @@
 /**
  * Represents a generic Node in a tree or graph structure.
- * 
+ *
  * A Node is characterized by its type and value. The type indicates
- * the kind of data or element the Node represents, while the value holds 
- * the actual data. 
+ * the kind of data or element the Node represents, while the value holds
+ * the actual data.
  *
  * @template Type The type of the Node, extending from a string.
  * @template Value The type of the value contained in the Node.
