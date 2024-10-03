@@ -111,7 +111,14 @@ export class Schema<Type> {
 
 		// If the schema is a string, return the string wrapped in quotes.
 		if (typeof schema === "string") {
-			if (/string|number|bigint|boolean|symbol|undefined|object|function/.test(schema)) {
+			if (schema === "string" ||
+				schema === "number" ||
+				schema === "boolean" ||
+				schema === "function" ||
+				schema === "undefined" ||
+				schema === "object" ||
+				schema === "bigint" ||
+				schema === "symbol") {
 				return schema;
 			}
 

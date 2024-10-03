@@ -1,6 +1,22 @@
 import { bench, group, run } from "mitata";
 import _ from "lodash";
 
+// group(() => {
+//     const type = "function" as string;
+//     bench("regexp", () => {
+//         return /string|number|bigint|boolean|symbol|undefined|object|function/.test(type)
+//     })
+
+//     bench("string", () => { // faster
+//         return type === "string" ||
+//             type === "number" ||
+//             type === "boolean" ||
+//             type === "function" ||
+//             type === "bigint" ||
+//             type === "symbol"
+//     })
+// })
+
 // group("uniq vs set", () => {
 //     bench("uniq", () => { // x1.63 faster
 //         const x = _.uniq([1, 2, 3, 4, 5, 5, 6, 7, 8, 2, 6]);
