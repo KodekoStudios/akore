@@ -2,15 +2,20 @@ import { isChild, isImplementing } from "@common/classes";
 import { format } from "@common/format";
 import { Node } from "./node";
 
+/**
+ * Represents a schema object that defines the structure and type of data.
+ *
+ * @template Type The type of the schema structure.
+ */
 export class Schema<Type> {
 	/** The identifier of the schema. */
 	public readonly identifier: string;
 
-	/** The structure of the object. */
+	/** The structure of the object defined by the schema. */
 	public readonly structure: Type;
 
 	/**
-	 * Represents a schema object.
+	 * Creates a new Schema instance.
 	 *
 	 * @param identifier The identifier for the schema.
 	 * @param schema The structure of the schema.
@@ -21,7 +26,7 @@ export class Schema<Type> {
 	}
 
 	/**
-	 * Compares a value against the schema.
+	 * Compares a value against the schema structure.
 	 *
 	 * @param value The value to compare.
 	 * @returns `true` if the value matches the schema, `false` otherwise.
@@ -33,7 +38,7 @@ export class Schema<Type> {
 	/**
 	 * Returns a string representation of the Schema object.
 	 *
-	 * @param indent The indentation level for the string representation. Default is 1.
+	 * @param indent The indentation level for the string representation. Default is 0.
 	 * @returns A string representation of the Schema object.
 	 */
 	public toString(indent = 0): string {
@@ -41,7 +46,10 @@ export class Schema<Type> {
 	}
 
 	/**
-	 * Compares a value against a schema.
+	 * Compares a value against a schema structure.
+	 *
+	 * This method handles various schema types including primitive types,
+	 * arrays, objects, and constructor functions.
 	 *
 	 * @param value The value to compare.
 	 * @param schema The schema to compare against.
@@ -54,16 +62,19 @@ export class Schema<Type> {
 		}
 
 		if (Array.isArray(schema)) {
-			if (!Array.isArray(value)) return false;
-			return value.every((item: unknown) =>
-				schema.length === 1
-					? this._compare(item, schema[0])
-					: schema.some((type) => this._compare(item, type)),
-			);
+			if (!Array.isArray(value)) return false; // Ensure both are arrays
+			for (const item of value) {
+				if (schema.length === 1) {
+					if (!this._compare(item, schema[0])) return false; // Single type check
+				} else if (!schema.some((type) => this._compare(item, type))) {
+					return false; // Multiple type check
+				}
+			}
+			return true;
 		}
 
-		if (typeof schema === "object") {
-			if (typeof value !== "object" || value === null) return false;
+		if (typeof schema === "object" && schema !== null) {
+			if (typeof value !== "object" || value === null) return false; // Ensure both are objects
 			for (const key in schema) {
 				if (
 					!(key in value) ||
@@ -72,99 +83,77 @@ export class Schema<Type> {
 						(schema as Record<string, unknown>)[key],
 					)
 				) {
-					return false;
+					return false; // Check for missing keys or mismatched values
 				}
 			}
 			return true;
 		}
 
-		if (typeof schema === "function" && schema.prototype) {
+		if (typeof schema === "function") {
 			if (schema === Node) {
 				return (
 					isImplementing((value as Node<string, unknown>).constructor, Node) ||
 					isChild((value as Node<string, unknown>).constructor, Node)
 				);
 			}
-			return value instanceof schema;
+			return value instanceof schema; // Check instance against constructor
 		}
 
-		return false;
+		return false; // Return false for unsupported schema types
 	}
 
 	/**
 	 * Returns a string representation of the given schema.
+	 *
+	 * This method converts various schema types, including nested schemas,
+	 * arrays, and objects, into a human-readable format.
 	 *
 	 * @param schema The schema to convert to a string.
 	 * @param indent The indentation level for the string representation.
 	 * @returns The string representation of the schema.
 	 */
 	protected _toString(schema = this.structure, indent = 0): string {
-		// If the schema is an instance of Schema, return the string representation of the schema.
 		if (schema instanceof Schema) {
-			return schema.toString(indent + 1);
+			return schema.toString(indent + 1); // Recursively get string representation of nested Schema
 		}
 
-		// If the schema is null, return "null".
 		if (schema === null) {
-			return "null";
+			return "null"; // Handle null value
 		}
 
-		// If the schema is a string, return the string wrapped in quotes.
 		if (typeof schema === "string") {
-			if (schema === "string" ||
-				schema === "number" ||
-				schema === "boolean" ||
-				schema === "function" ||
-				schema === "undefined" ||
-				schema === "object" ||
-				schema === "bigint" ||
-				schema === "symbol") {
-				return schema;
-			}
-
-			return `"${schema}"`;
+			const primitives = [
+				"string",
+				"number",
+				"boolean",
+				"function",
+				"undefined",
+				"object",
+				"bigint",
+				"symbol",
+			];
+			return primitives.includes(schema) ? schema : `"${schema}"`; // Return primitive or quoted string
 		}
 
-		// If the schema is a number, return the number as a string.
 		if (Array.isArray(schema)) {
-			// If the array is empty, return "never[]".
-			if (schema.length === 0) {
-				return "never[]";
-			}
-
-			// Create a set of all types in the array.
-			// Set is used to remove duplicates.
-			const types = new Set(schema.map((type) => this._toString(type, 0)));
-
-			// If theres no types, return "any[]".
-			if (types.size === 0) {
-				return "any[]";
-			}
-
-			// If theres only one type, return "{type}[]".
-			if (types.size === 1) {
-				return `${types.values().next().value}[]`;
-			}
-
-			// If there are multiple types, return a union of all types.
-			return `(${[...types].join(" | ")})[]`;
+			if (schema.length === 0) return "never[]"; // Handle empty array
+			const types = new Set(schema.map((type) => this._toString(type, 0))); // Deduplicate types
+			if (types.size === 0) return "any[]"; // Handle case with no types
+			if (types.size === 1) return `${[...types][0]}[]`; // Single type array
+			return `(${[...types].join(" | ")})[]`; // Multiple types array
 		}
 
-		// If the schema is an object, return a string representation of the object.
-		if (typeof schema === "object" && schema !== null) {
-			const entries = Object.entries(schema as Type & object).map(([key, value]) => {
-				return `${key}: ${this._toString(value, indent)};`;
-			});
-
-			return `{\n${format(entries.join("\n"), indent + 1)}\n}`;
+		if (typeof schema === "object") {
+			const entries = Object.entries(schema as Type & object).map(
+				([key, value]) => `${key}: ${this._toString(value, indent)};`,
+			); // Convert object to string
+			return `{\n${format(entries.join("\n"), indent + 1)}\n}`; // Format object representation
 		}
 
-		// If the schema is a class, return the class name.
-		if (typeof schema === "function" && schema.prototype) {
-			return schema.name;
+		if (typeof schema === "function") {
+			return schema.name; // Return constructor name
 		}
 
-		// If the schema is of any other type, return the type as a string.
-		return typeof schema;
+		return typeof schema; // Return type as string for other cases
 	}
 }
