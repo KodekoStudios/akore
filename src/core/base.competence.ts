@@ -100,20 +100,36 @@ export abstract class BaseCompetence<Transpiler extends BaseTranspiler> {
 	abstract resolve(token: Token<Transpiler>): Node<string, unknown>;
 
 	/**
-	 * Splits a string by a delimiter.
+	 * Splits a string by a specified delimiter while respecting nested structures defined by opener and closer patterns.
 	 *
-	 * @param inside The string to split.
-	 * @param delimiter The delimiter to use (default: ";").
-	 * @returns A generator of the split strings.
+	 * This method tokenizes a string into segments based on a delimiter. It takes into account any nested
+	 * structures by utilizing the provided patterns for opener and closer. If an opener is found, the method
+	 * increases the depth count, and if a closer is encountered, it decreases the depth count. The method
+	 * only splits the string at the delimiter when the depth is zero, ensuring that nested structures remain
+	 * intact.
+	 *
+	 * @param inside The string to split. This string can contain nested structures that the method will respect.
+	 * @param delimiter The delimiter to use for splitting the string. The default value is `";"`.
+	 *                  It can be overridden by passing a different delimiter.
+	 * @returns A generator of the split strings. Each call to the generator yields the next segment of the
+	 *          string that was split based on the provided delimiter, while honoring nested structures.
+	 *
+	 * @example
+	 * // Example usage of splitByDelimiter
+	 * const competence = new SomeCompetence(transpiler);
+	 * const input = "item1;item2{nested1;nested2};item3";
+	 * const generator = competence.splitByDelimiter(input);
+	 * for (const segment of generator) {
+	 *     console.log(segment); // Outputs: "item1", "item2{nested1;nested2}", "item3"
+	 * }
 	 */
 	protected *splitByDelimiter(inside: string, delimiter = ";"): Generator<string> {
 		let current = "";
 		let index = 0;
 		let depth = 0;
-		let char: string;
 
 		while (index < inside.length) {
-			char = inside.charAt(index++);
+			const char = inside.charAt(index++);
 			if (char === delimiter && depth === 0) {
 				yield current;
 				current = "";
@@ -131,5 +147,7 @@ export abstract class BaseCompetence<Transpiler extends BaseTranspiler> {
 		if (current) {
 			yield current;
 		}
+
+		// TODO: Error handling for unbalanced patterns can be added here.
 	}
 }
