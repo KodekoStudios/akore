@@ -40,12 +40,6 @@ export interface Patterns {
 	readonly inside?: RegExp;
 
 	/**
-	 * Specifies whether the pattern is unstoppable, meaning it cannot be interrupted by other patterns.
-	 * @deprecated Use the LexicalFlags.UNSTOPPABLE flag instead.
-	 */
-	readonly unstoppable?: boolean;
-
-	/**
 	 * An optional pattern used for matching the closing of parameters.
 	 */
 	readonly closer?: RegExp;
