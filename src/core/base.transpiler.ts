@@ -130,7 +130,7 @@ export abstract class BaseTranspiler {
 
 	/**
 	 * Tokenizes the input string and returns a tokens array.
-	 * 
+	 *
 	 * @param source The input string to be tokenized.
 	 * @returns Tokens generated from the input string.
 	 */
@@ -165,8 +165,16 @@ export abstract class BaseTranspiler {
 			const prev = result.pop();
 
 			if (!prev) {
-				// TODO: It would be nice to add the column and references to the error, but I'm a bit lazy.
-				this.logger.throw(`Illegal token {underline;italic:${token.total}} at Ln ${token.line}, Col ${token.column}.`);
+				this.logger.throw(
+					`Illegal token {underline;italic:${token.total}} at Ln ${token.line}, Col ${token.column}.`,
+					token.match.input
+						?.split(/\n/g)
+						.slice(Math.max(0, token.line - 4), token.line)
+						.join("\n"),
+					// TODO: I don't really know if this would work.
+					`${" ".repeat(token.column - 1)}{italic:${"^".repeat(token.total.length)} Here!}`,
+
+				);
 				break; // Unreachable
 			}
 
@@ -185,7 +193,6 @@ export abstract class BaseTranspiler {
 		token: Token<this>,
 	) {
 		for (const expected of after) {
-
 			const next = tokens.next();
 
 			if (next.done) {
