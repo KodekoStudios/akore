@@ -1,0 +1,10 @@
+[package]
+name = "akore"
+version = "0.0.1"
+authors = ["Pavéz <maxpavez02@gmail.com>"]
+description = "A simple transpiler for your custom language."
+license = "Kodeko Studios Proprietary License"
+edition = "2021"
+
+[dependencies]
+regex = "1.11.1"
